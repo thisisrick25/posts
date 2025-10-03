@@ -1,0 +1,73 @@
+---
+title: git setup
+description: Brief explanation of git setup
+publishedAt: 2025-10-03
+isPublished: true
+tags:
+  - git
+---
+
+Set name and email (these appear in commits):
+
+```shell
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+Common useful global settings:
+
+```shell
+git config --global core.editor "code --wait"   # VS Code
+git config --global init.defaultBranch main
+git config --global credential.helper manager-core  # Windows credential helper
+```
+
+Generate a key and add it to your Git hosting account:
+
+```shell
+ssh-keygen -t ed25519 -C "you@example.com"
+ssh-keygen -t rsa -b 4096 -C "you@example.com"  # or for older systems
+```
+
+Then copy the public key and add it to your provider (GitHub/GitLab). On Windows, open the public key with:
+
+```shell
+type %userprofile%\.ssh\id_ed25519.pub
+```
+
+Or use a clipboard helper like `clip < ~/.ssh/id_ed25519.pub` in Git Bash.
+
+Test the connection:
+
+```shell
+ssh -T git@github.com
+```
+
+Add a remote and push your branch:
+
+```shell
+git remote add origin git@github.com:owner/repo.git
+git branch -M main
+git push -u origin main
+```
+
+If using HTTPS, you'll be prompted for credentials unless you use a credential helper.
+
+Set a few global aliases to speed up common tasks:
+
+```shell
+git config --global alias.st status
+git config --global alias.co checkout
+git config --global alias.br branch
+git config --global alias.cm "commit -m"
+git config --global alias.lg "log --oneline --graph --all"
+```
+
+- See what changed: `git status`, `git diff`.
+- Unstage files: `git restore --staged <file>` (or `git reset HEAD <file>` for older Git).
+- Discard local changes: `git restore <file>`.
+- Amend last commit: `git commit --amend --no-edit` (or change message).
+- Recover lost commits: `git reflog` then `git checkout <sha>`.
+
+
+---
+
