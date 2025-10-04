@@ -7,13 +7,22 @@ tags:
   - git
 ---
 
-Working with multiple git repos on different hosts (like GitHub, GitLab) can be cumbersome when it comes to managing SSH keys and commit signing. 
+Git applies settings from your `~/.gitconfig` to every repository. This is useful for defaults but becomes a problem when repositories or remotes need different identities or settings, for example:
+
+1. Different user identities or signing keys for different remotes (github, gitlab, bitbucket).
+2. Frequently switching between private and public remotes, which forces manual overrides.
+3. Managing multiple SSH keys and per-host commit signing.
+
+These situations often require editing or overriding your global config — the rest of this post shows how to scope settings to specific hosts and repos.
 
 How it works
 - Use `~/.ssh/config` to select the right SSH key per host.
 - Use Git's `includeIf` to load host-specific `.gitconfig` only when a repository uses that remote.
 - Configure commit signing per host and register allowed signers on the server.
 
+> This is for Windows, but the same principles apply to Linux and macOS. Just adjust file paths accordingly.
+
+> I am using different SSH keys for authentication and signing commits for GitHub and GitLab. You can use the same key for both, but using separate keys is more secure.
 
 ## multiple git host with different ssh auth and sign key
 
