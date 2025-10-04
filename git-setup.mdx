@@ -1,78 +1,25 @@
 ---
-title: git setup
-description: How I setup git for development
+title: Git Configuration Based on Remote Repositories
+description: Git Configuration Based on Remote Repositories
 publishedAt: 2025-10-03
 isPublished: true
 tags:
   - git
 ---
 
-## basics
+Working with multiple git repos on different hosts (like GitHub, GitLab) can be cumbersome when it comes to managing SSH keys and commit signing. 
 
-Set name and email
+How it works
+- Use `~/.ssh/config` to select the right SSH key per host.
+- Use Git's `includeIf` to load host-specific `.gitconfig` only when a repository uses that remote.
+- Configure commit signing per host and register allowed signers on the server.
 
-```shell
-git config --global user.name "Your Name"
-git config --global user.email "you@example.com"
-```
-Common useful global settings
 
-```shell
-git config --global core.editor "code --wait"   # VS Code
-git config --global init.defaultBranch main
-git config --global credential.helper manager-core  # Windows credential helper
-```
+## multiple git host with different ssh auth and sign key
 
-Generate a key and add it to your Git hosting account
+To manage multiple git hosts (like GitHub, GitLab) with different SSH keys, 
 
-```shell
-ssh-keygen -t ed25519 -C "you@example.com"
-ssh-keygen -t rsa -b 4096 -C "you@example.com"  # or for older systems
-```
-
-Then copy the public key and add it to your provider (GitHub/GitLab). On Windows, open the public key with
-
-```shell
-type %userprofile%\.ssh\id_ed25519.pub
-```
-
-Or use a clipboard helper like `clip < ~/.ssh/id_ed25519.pub` in Git Bash.
-
-Test the connection
-
-```shell
-ssh -T git@github.com
-```
-
-Add a remote and push your branch
-
-```shell
-git remote add origin git@github.com:owner/repo.git
-git branch -M main
-git push -u origin main
-```
-
-If using HTTPS, you'll be prompted for credentials unless you use a credential helper.
-
-Set a few global aliases to speed up common tasks
-
-```shell
-git config --global alias.st status
-git config --global alias.co checkout
-git config --global alias.br branch
-git config --global alias.cm "commit -m"
-git config --global alias.lg "log --oneline --graph --all"
-```
-
-- See what changed: `git status`, `git diff`.
-- Unstage files: `git restore --staged <file>` (or `git reset HEAD <file>` for older Git).
-- Discard local changes: `git restore <file>`.
-- Amend last commit: `git commit --amend --no-edit` (or change message).
-- Recover lost commits: `git reflog` then `git checkout <sha>`.
-
-## advanced
-
-for multiple git host with different ssh auth and sign key
+1. Create a SSH config file at `~/.ssh/config`
 
 ```shell title="C://Users/username/.ssh/config"
 # github
@@ -88,4 +35,33 @@ Host gitlab.com
     User git
     IdentityFile ~/.ssh/id_ed25519_gitlab_auth
     IdentitiesOnly yes
+```
+
+```shell title="C://Users/username/.gitconfig"
+[user]
+	name = thisisrick25
+	email = swapnaneel06@gmail.com
+	signingkey = C:\\Users\\username\\.ssh\\id_ed25519_github_sign.pub
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	allowedSignersFile = ~/.ssh/allowed_github_signers
+[commit]
+	gpgsign = true
+[includeIf "hasconfig:remote.*.url:*gitlab.com*/**"]
+    path = ~/.gitconfig-gitlab
+[includeIf "hasconfig:remote.*.url:https://gitlab.com/**"]
+    path = ~/.gitconfig-gitlab
+```
+
+```shell title="C://Users/username/.gitconfig-gitlab"
+[user]
+	signingkey = C:\\Users\\username\\.ssh\\id_ed25519_gitlab_sign.pub
+[gpg "ssh"]
+	allowedSignersFile = ~/.ssh/allowed_gitlab_signers
 ```
