@@ -7,13 +7,21 @@ tags:
   - git
 ---
 
+## Problem
+
 Git applies settings from your `~/.gitconfig` to every repository. This is useful for defaults but becomes a problem when repositories or remotes need different identities or settings, for example:
 
 1. Different user identities or signing keys for different remotes (github, gitlab, bitbucket).
 2. Frequently switching between private and public remotes, which forces manual overrides.
 3. Managing multiple SSH keys and per-host commit signing.
 
-These situations often require editing or overriding your global config — the rest of this post shows how to scope settings to specific hosts and repos.
+These situations often require editing or overriding your global config.
+
+## Using `includeIf` Conditional Configuration
+
+Git's `includeIf` directive allows you to conditionally include configuration files based on certain criteria, such as the presence of a specific remote URL.
+
+`hasconfig:remote.*.url` checks if any remote URL matches the specified pattern. This enables you to load different configuration files based on the remote repository's host.
 
 How it works
 - Use `~/.ssh/config` to select the right SSH key per host.
@@ -22,13 +30,11 @@ How it works
 
 > This is for Windows, but the same principles apply to Linux and macOS. Just adjust file paths accordingly.
 
-> I am using different SSH keys for authentication and signing commits for GitHub and GitLab. You can use the same key for both, but using separate keys is more secure.
+> I am using different SSH keys for authentication and signing commits for GitHub and GitLab. You can use the same key for both, but I prefer separate keys.
 
-## multiple git host with different ssh auth and sign key
+## Step-by-step setup
 
-To manage multiple git hosts (like GitHub, GitLab) with different SSH keys, 
-
-1. Create a SSH config file at `~/.ssh/config`
+### 1. Create a SSH config file at `~/.ssh/config`
 
 ```shell title="C://Users/username/.ssh/config"
 # github
@@ -46,7 +52,18 @@ Host gitlab.com
     IdentitiesOnly yes
 ```
 
-```shell title="C://Users/username/.gitconfig"
+> `~/.ssh/config` is optional but useful if you use different SSH keys for different hosts. It ensures the correct key is used for authentication.
+
+### 2. Create a Git configuration file for GitLab at `~/.gitconfig-gitlab`
+
+```shell title="C://Users/username/.gitconfig-gitlab"
+[user]
+	signingkey = C:\\Users\\username\\.ssh\\id_ed25519_gitlab_sign.pub
+```
+
+### 3. Update your global Git configuration at `~/.gitconfig` to include the GitLab config when a repository uses a GitLab remote.
+
+```shell title="C://Users/username/.gitconfig" {14-17}
 [user]
 	name = thisisrick25
 	email = swapnaneel06@gmail.com
@@ -58,8 +75,6 @@ Host gitlab.com
 	required = true
 [gpg]
 	format = ssh
-[gpg "ssh"]
-	allowedSignersFile = ~/.ssh/allowed_github_signers
 [commit]
 	gpgsign = true
 [includeIf "hasconfig:remote.*.url:*gitlab.com*/**"]
@@ -67,10 +82,4 @@ Host gitlab.com
 [includeIf "hasconfig:remote.*.url:https://gitlab.com/**"]
     path = ~/.gitconfig-gitlab
 ```
-
-```shell title="C://Users/username/.gitconfig-gitlab"
-[user]
-	signingkey = C:\\Users\\username\\.ssh\\id_ed25519_gitlab_sign.pub
-[gpg "ssh"]
-	allowedSignersFile = ~/.ssh/allowed_gitlab_signers
-```
+> `gitlab.com*/**` is used for SSH remotes for GitLab. `https://gitlab.com/**` is used for HTTPS remotes for GitLab.
